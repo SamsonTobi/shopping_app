@@ -15,7 +15,37 @@ class ProductView extends StatefulWidget {
 }
 
 class _ProductViewState extends State<ProductView> {
-  Product get product => widget.product;
+  late ValueNotifier<int> quantityNotifier;
+  late ValueNotifier<double> totalPriceNotifier;
+
+  @override
+  void initState() {
+    super.initState();
+    quantityNotifier = ValueNotifier<int>(0);
+    totalPriceNotifier = ValueNotifier<double>(0.0);
+  }
+
+  @override
+  void dispose() {
+    quantityNotifier.dispose;
+    totalPriceNotifier.dispose;
+    super.dispose;
+  }
+
+  void _updateTotalPrice() {
+    totalPriceNotifier.value =
+        widget.product.currentPrice * quantityNotifier.value;
+  }
+
+  void _incrementQuantity() {
+    quantityNotifier.value++;
+    _updateTotalPrice();
+  }
+
+  void _decrementQuantity() {
+    quantityNotifier.value--;
+    _updateTotalPrice();
+  }
 
   @override
   Widget build(BuildContext context) {
@@ -35,8 +65,8 @@ class _ProductViewState extends State<ProductView> {
                     icon: const Icon(Icons.arrow_back_rounded),
                     padding: const EdgeInsets.all(12.0),
                     style: ButtonStyle(
-                        backgroundColor: MaterialStateProperty.all<Color>(
-                            AppColors.Grey100)),
+                        backgroundColor:
+                            WidgetStateProperty.all<Color>(AppColors.Grey100)),
                   ),
                   const Spacer(),
                   IconButton(
@@ -44,8 +74,8 @@ class _ProductViewState extends State<ProductView> {
                     icon: const Icon(Icons.favorite_border_rounded),
                     padding: const EdgeInsets.all(12.0),
                     style: ButtonStyle(
-                        backgroundColor: MaterialStateProperty.all<Color>(
-                            AppColors.Grey100)),
+                        backgroundColor:
+                            WidgetStateProperty.all<Color>(AppColors.Grey100)),
                   )
                 ],
               ),
@@ -86,7 +116,7 @@ class _ProductViewState extends State<ProductView> {
                 crossAxisAlignment: CrossAxisAlignment.start,
                 children: [
                   Text(
-                    widget.productName,
+                    widget.product.productName,
                     style: const TextStyle(
                         fontFamily: 'Graphik',
                         fontSize: 22,
@@ -94,7 +124,7 @@ class _ProductViewState extends State<ProductView> {
                         color: AppColors.Grey300),
                   ),
                   Text(
-                    '\$${widget.price}',
+                    '\$${widget.product.currentPrice}',
                     style: const TextStyle(
                         fontFamily: 'Graphik',
                         fontSize: 22,
@@ -130,10 +160,9 @@ class _ProductViewState extends State<ProductView> {
                               color: AppColors.Grey300),
                         ),
                         const Spacer(),
-                        ValueListenableBuilder<Map<Product, int>>(
-                            valueListenable: cartNotifier,
-                            builder: (context, cart, child) {
-                              final quantity = cart[product] ?? 0;
+                        ValueListenableBuilder<int>(
+                            valueListenable: quantityNotifier,
+                            builder: (context, quantity, child) {
                               return Row(
                                 children: [
                                   Container(
@@ -147,23 +176,7 @@ class _ProductViewState extends State<ProductView> {
                                             BorderRadius.circular(30)),
                                     child: IconButton(
                                       onPressed: () {
-                                        final newQuantity = quantity > 0
-                                            ? quantity - 1
-                                            : quantity;
-                                        totalPrice = widget.price * quantity;
-
-                                        if (cartNotifier.value
-                                            .containsKey(product)) {
-                                          if (quantity == 0) {
-                                            cartNotifier.value =
-                                                (Map.from(cartNotifier.value)
-                                                  ..remove(product));
-                                          } else {
-                                            cartNotifier.value =
-                                                (Map.from(cartNotifier.value)
-                                                  ..[product] = quantity);
-                                          }
-                                        }
+                                        _decrementQuantity();
                                       },
                                       padding: const EdgeInsets.all(0),
                                       icon: const Icon(Icons.remove),
@@ -196,12 +209,7 @@ class _ProductViewState extends State<ProductView> {
                                             BorderRadius.circular(30)),
                                     child: IconButton(
                                       onPressed: () {
-                                        quantity++;
-                                        totalPrice = widget.price * quantity;
-
-                                        cartNotifier.value =
-                                            (Map.from(cartNotifier.value)
-                                              ..[product] = quantity);
+                                        _incrementQuantity();
                                       },
                                       padding: const EdgeInsets.all(0),
                                       icon: const Icon(Icons.add),
@@ -220,8 +228,8 @@ class _ProductViewState extends State<ProductView> {
             ),
             const Spacer(),
             DefaultButton(
-                price: widget.price,
-                totalPrice: ((totalPrice * 100).truncateToDouble()) / 100),
+                price: widget.product.currentPrice,
+                totalPrice: ((totalPriceNotifier.value * 100).truncateToDouble()) / 100),
             // const ItemInCartButton()
           ],
         ),

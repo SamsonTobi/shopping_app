@@ -151,8 +151,7 @@ class ProductScreen extends StatelessWidget {
                               onTap: () => {
                                 Navigator.push(context, 
                                 MaterialPageRoute(builder: (context) => ProductView(
-                                  productName: productDetails[index].productName,
-                                  price: productDetails[index].currentPrice
+                                  product: productDetails[index],
                                 ))
                                 )
                               },
